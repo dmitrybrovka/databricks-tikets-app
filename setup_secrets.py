@@ -17,7 +17,7 @@ from databricks.sdk.service import workspace
 w = WorkspaceClient()
 
 SCOPE = "database"
-KEY = "lakebase-url"
+KEY = "tickets-lakebase-url-again"
 
 try:
     w.secrets.create_scope(scope=SCOPE)
