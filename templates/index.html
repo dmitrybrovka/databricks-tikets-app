@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Support Tickets</title>
+  <style>
+    :root {
+      --bg: #f6f4f0;
+      --ink: #1a1f1c;
+      --muted: #5c665f;
+      --line: #d5d0c6;
+      --panel: #fffdf9;
+      --accent: #0f6e56;
+      --accent-soft: #e6f3ee;
+      --warn: #8a4b12;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse 80% 50% at 10% -10%, #dceee7 0%, transparent 55%),
+        radial-gradient(ellipse 60% 40% at 100% 0%, #efe6d6 0%, transparent 50%),
+        var(--bg);
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 1.75rem 1.5rem 1rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      margin: 0.4rem 0 0;
+      color: var(--muted);
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      font-size: 0.95rem;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1.5rem 2.5rem;
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 820px) {
+      main { grid-template-columns: 1fr; }
+    }
+
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 1rem 1.1rem 1.2rem;
+    }
+
+    h2 {
+      margin: 0 0 0.85rem;
+      font-size: 1.15rem;
+    }
+
+    label {
+      display: block;
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      margin-bottom: 0.3rem;
+    }
+
+    input, textarea, select, button {
+      font: inherit;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 0.55rem 0.65rem;
+      background: #fff;
+      color: var(--ink);
+      margin-bottom: 0.75rem;
+    }
+
+    textarea { min-height: 90px; resize: vertical; }
+
+    button {
+      border: none;
+      border-radius: 6px;
+      background: var(--accent);
+      color: #fff;
+      padding: 0.55rem 0.9rem;
+      cursor: pointer;
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      font-size: 0.9rem;
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    button.secondary {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+    }
+
+    .row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .ticket-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      max-height: 420px;
+      overflow: auto;
+    }
+
+    .ticket-list li {
+      border-top: 1px solid var(--line);
+      padding: 0.7rem 0.35rem;
+      cursor: pointer;
+    }
+
+    .ticket-list li:hover,
+    .ticket-list li.active {
+      background: var(--accent-soft);
+    }
+
+    .ticket-list .title {
+      font-weight: 600;
+    }
+
+    .meta {
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+
+    .badge {
+      display: inline-block;
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      padding: 0.15rem 0.45rem;
+      border-radius: 999px;
+      background: #eee8dc;
+      color: var(--warn);
+    }
+
+    .badge.open { background: #e6f3ee; color: var(--accent); }
+    .badge.in_progress { background: #eef0f7; color: #334; }
+    .badge.solved { background: #e8efe4; color: #2f5d2a; }
+
+    .messages {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      max-height: 280px;
+      overflow: auto;
+      margin-bottom: 1rem;
+    }
+
+    .message {
+      border-left: 3px solid var(--accent);
+      padding: 0.45rem 0.7rem;
+      background: #faf8f4;
+    }
+
+    .empty, .error {
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .error { color: #9b1c1c; }
+
+    .detail-empty {
+      color: var(--muted);
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+    }
+
+    .create-block {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--line);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Support Tickets</h1>
+    <p>View tickets, reply with messages, and update status in Lakebase.</p>
+  </header>
+
+  <main>
+    <section>
+      <div class="row" style="justify-content: space-between; margin-bottom: 0.5rem;">
+        <h2 style="margin: 0;">All tickets</h2>
+        <button class="secondary" type="button" id="refreshBtn">Refresh</button>
+      </div>
+      <div id="ticketError" class="error" hidden></div>
+      <ul class="ticket-list" id="ticketList"></ul>
+
+      <div class="create-block">
+        <h2>Create ticket</h2>
+        <form id="createForm">
+          <label for="title">Title</label>
+          <input id="title" name="title" required maxlength="200" placeholder="Brief summary of the issue" />
+          <button type="submit">Create ticket</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="detailSection">
+      <div id="detailEmpty" class="detail-empty">Select a ticket to view messages.</div>
+      <div id="detailContent" hidden>
+        <div class="row" style="justify-content: space-between; align-items: flex-start;">
+          <div>
+            <h2 id="detailTitle" style="margin-bottom: 0.35rem;"></h2>
+            <div class="meta" id="detailMeta"></div>
+          </div>
+          <span class="badge" id="detailBadge"></span>
+        </div>
+
+        <div style="margin: 1rem 0;">
+          <label for="statusSelect">Update status</label>
+          <div class="row">
+            <select id="statusSelect" style="margin-bottom: 0; max-width: 220px;">
+              <option value="open">open</option>
+              <option value="in_progress">in_progress</option>
+              <option value="solved">solved</option>
+            </select>
+            <button type="button" id="statusBtn">Save status</button>
+          </div>
+        </div>
+
+        <h2>Messages</h2>
+        <div id="messagesError" class="error" hidden></div>
+        <div class="messages" id="messages"></div>
+
+        <form id="messageForm">
+          <label for="messageText">Add message</label>
+          <textarea id="messageText" required placeholder="Write a reply…"></textarea>
+          <button type="submit">Add message</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    let selectedTicketId = null;
+    let ticketsById = {};
+
+    async function api(path, options = {}) {
+      const resp = await fetch(path, {
+        headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+        ...options,
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        throw new Error(data.error || `Request failed (${resp.status})`);
+      }
+      return data;
+    }
+
+    function formatWhen(value) {
+      if (!value) return "";
+      try {
+        return new Date(value).toLocaleString();
+      } catch {
+        return value;
+      }
+    }
+
+    function showError(el, message) {
+      if (!message) {
+        el.hidden = true;
+        el.textContent = "";
+        return;
+      }
+      el.hidden = false;
+      el.textContent = message;
+    }
+
+    async function loadTickets() {
+      const errEl = document.getElementById("ticketError");
+      showError(errEl, "");
+      try {
+        const tickets = await api("/tickets");
+        ticketsById = Object.fromEntries(tickets.map((t) => [t.ticket_id, t]));
+        renderTicketList(tickets);
+        if (selectedTicketId && ticketsById[selectedTicketId]) {
+          selectTicket(selectedTicketId, { skipReloadMessages: true });
+          await loadMessages(selectedTicketId);
+        } else if (selectedTicketId) {
+          selectedTicketId = null;
+          document.getElementById("detailContent").hidden = true;
+          document.getElementById("detailEmpty").hidden = false;
+        }
+      } catch (err) {
+        showError(errEl, err.message);
+      }
+    }
+
+    function renderTicketList(tickets) {
+      const list = document.getElementById("ticketList");
+      list.innerHTML = "";
+      if (!tickets.length) {
+        list.innerHTML = '<li class="empty">No tickets yet. Create one below.</li>';
+        return;
+      }
+      for (const t of tickets) {
+        const li = document.createElement("li");
+        li.dataset.id = t.ticket_id;
+        if (t.ticket_id === selectedTicketId) li.classList.add("active");
+        li.innerHTML = `
+          <div class="title">${escapeHtml(t.title)}</div>
+          <div class="meta">
+            <span class="badge ${escapeHtml(t.status)}">${escapeHtml(t.status)}</span>
+            · ${escapeHtml(t.created_by || "")}
+            · ${escapeHtml(formatWhen(t.created_at))}
+          </div>
+        `;
+        li.addEventListener("click", () => selectTicket(t.ticket_id));
+        list.appendChild(li);
+      }
+    }
+
+    async function selectTicket(ticketId, { skipReloadMessages = false } = {}) {
+      selectedTicketId = ticketId;
+      const t = ticketsById[ticketId];
+      if (!t) return;
+
+      document.querySelectorAll(".ticket-list li").forEach((li) => {
+        li.classList.toggle("active", li.dataset.id === ticketId);
+      });
+
+      document.getElementById("detailEmpty").hidden = true;
+      document.getElementById("detailContent").hidden = false;
+      document.getElementById("detailTitle").textContent = t.title;
+      document.getElementById("detailMeta").textContent =
+        `${t.created_by || ""} · ${formatWhen(t.created_at)} · ${t.ticket_id}`;
+      const badge = document.getElementById("detailBadge");
+      badge.textContent = t.status;
+      badge.className = `badge ${t.status}`;
+      document.getElementById("statusSelect").value = t.status;
+
+      if (!skipReloadMessages) {
+        await loadMessages(ticketId);
+      }
+    }
+
+    async function loadMessages(ticketId) {
+      const errEl = document.getElementById("messagesError");
+      const box = document.getElementById("messages");
+      showError(errEl, "");
+      box.innerHTML = '<div class="empty">Loading…</div>';
+      try {
+        const messages = await api(`/tickets/${ticketId}/messages`);
+        box.innerHTML = "";
+        if (!messages.length) {
+          box.innerHTML = '<div class="empty">No messages yet.</div>';
+          return;
+        }
+        for (const m of messages) {
+          const div = document.createElement("div");
+          div.className = "message";
+          div.innerHTML = `
+            <div>${escapeHtml(m.message_text)}</div>
+            <div class="meta">${escapeHtml(m.author || "")} · ${escapeHtml(formatWhen(m.created_at))}</div>
+          `;
+          box.appendChild(div);
+        }
+      } catch (err) {
+        box.innerHTML = "";
+        showError(errEl, err.message);
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    document.getElementById("refreshBtn").addEventListener("click", loadTickets);
+
+    document.getElementById("createForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const title = document.getElementById("title").value.trim();
+      if (!title) return;
+      try {
+        const created = await api("/tickets", {
+          method: "POST",
+          body: JSON.stringify({ title }),
+        });
+        document.getElementById("title").value = "";
+        await loadTickets();
+        await selectTicket(created.ticket_id);
+      } catch (err) {
+        showError(document.getElementById("ticketError"), err.message);
+      }
+    });
+
+    document.getElementById("statusBtn").addEventListener("click", async () => {
+      if (!selectedTicketId) return;
+      const status = document.getElementById("statusSelect").value;
+      try {
+        const updated = await api(`/tickets/${selectedTicketId}/status`, {
+          method: "PATCH",
+          body: JSON.stringify({ status }),
+        });
+        ticketsById[updated.ticket_id] = updated;
+        await loadTickets();
+      } catch (err) {
+        showError(document.getElementById("messagesError"), err.message);
+      }
+    });
+
+    document.getElementById("messageForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!selectedTicketId) return;
+      const message_text = document.getElementById("messageText").value.trim();
+      if (!message_text) return;
+      try {
+        await api(`/tickets/${selectedTicketId}/messages`, {
+          method: "POST",
+          body: JSON.stringify({ message_text }),
+        });
+        document.getElementById("messageText").value = "";
+        await loadMessages(selectedTicketId);
+      } catch (err) {
+        showError(document.getElementById("messagesError"), err.message);
+      }
+    });
+
+    loadTickets();
+  </script>
+</body>
+</html>
