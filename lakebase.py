@@ -58,3 +58,13 @@ def run_write(sql: str, params: tuple | dict | None = None) -> int:
             cur.execute(sql, params)
             conn.commit()
             return cur.rowcount
+
+
+def run_write_returning(sql: str, params: tuple | dict | None = None) -> list[dict]:
+    """Run a write that includes RETURNING and return the result rows."""
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, params)
+            rows = cur.fetchall()
+            conn.commit()
+            return rows
